@@ -1,0 +1,18 @@
+{
+  "name": "gloodscraper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node-dev --inspect --transpileOnly --ignore-watch node_modules src/index.ts"
+  },
+  "dependencies": {
+    "puppeteer": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/puppeteer": "^3.0.0",
+    "ts-node-dev": "^1.0.0-pre.44",
+    "typescript": "^3.9.3"
+  }
+}
