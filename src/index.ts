@@ -1,4 +1,6 @@
+require('dotenv').config();
 import puppeteer from 'puppeteer';
+import { sendMail } from './mail';
 
 interface PageResult {
   productName: string | undefined;
@@ -47,25 +49,48 @@ async function evaluatePage(page: puppeteer.Page, pageName: string): Promise<Pag
   };
 }
 
+const isAvailableStock = (stock: string) => {
+  if (stock.includes('Sem Stock')){
+    return false;
+  }
+  return true;
+}
+
 function runScrape() {
-  scrapePage().then((results) => {
+  let mailBody = '';
+  scrapePage().then(async (results) => {
     results.forEach(result => {
-      if (result.price && result.oeirasStock){
+      if (result.price && result.oeirasStock && isAvailableStock(result.oeirasStock)){
         console.log('-----------');
         console.log('Results for: ', result.productName);
         console.log('The product price is: ', result.price);
         console.log('Stock in Oeiras:', result.oeirasStock);
         console.log('-----------\n');
+        mailBody += `
+        <h3>Nome do produto: ${result.productName}</h3>
+        <h4>Valor: ${result.price}</h4>
+        <h4>Estoque: <span style="font-size:30px">${result.oeirasStock}</span></h4>
+        <br/>
+        `;
       } else {
         console.log('-----------');
         console.log('Results for: ', result.productName);
         console.log('Not available in the website at the moment!');
         console.log('-----------\n');
+        mailBody += `
+        <h3>Nome do produto: ${result.productName}</h3>
+        <h4>PRODUTO SEM ESTOQUE OU INDISPONÍVEL</h4>
+        <br/>
+        `;
       }
     });
-    setTimeout(() => {
-      main();
-    }, 5000)
+    await sendMail({
+      from:'no-reply@gloodscraper.com',
+      replyTo:'no-reply@gloodscraper.com',
+      subject: 'Atualização de disponibilidade da Erva Mate no Glood.pt', 
+      text:' Hello GloodScraper 2',
+      html: '<p>Confira o resultado mais recente da disponiblidade dos produtos:<p><br/>' + mailBody,
+    });
   });
 }
 
