@@ -58,6 +58,7 @@ const isAvailableStock = (stock: string) => {
 
 function runScrape() {
   let mailBody = '';
+  let hasStock = false;
   scrapePage().then(async (results) => {
     results.forEach(result => {
       if (result.price && result.oeirasStock && isAvailableStock(result.oeirasStock)){
@@ -66,6 +67,7 @@ function runScrape() {
         console.log('The product price is: ', result.price);
         console.log('Stock in Oeiras:', result.oeirasStock);
         console.log('-----------\n');
+        hasStock = true;
         mailBody += `
         <h3>Nome do produto: ${result.productName}</h3>
         <h4>Valor: ${result.price}</h4>
@@ -84,13 +86,15 @@ function runScrape() {
         `;
       }
     });
-    await sendMail({
-      from:'no-reply@gloodscraper.com',
-      replyTo:'no-reply@gloodscraper.com',
-      subject: 'Atualização de disponibilidade da Erva Mate no Glood.pt', 
-      text:' Hello GloodScraper 2',
-      html: '<p>Confira o resultado mais recente da disponiblidade dos produtos:<p><br/>' + mailBody,
-    });
+    if(hasStock){
+      await sendMail({
+        from:'no-reply@gloodscraper.com',
+        replyTo:'no-reply@gloodscraper.com',
+        subject: 'Atualização de disponibilidade da Erva Mate no Glood.pt', 
+        text:' Hello GloodScraper 2',
+        html: '<p>Confira o resultado mais recente da disponiblidade dos produtos:<p><br/>' + mailBody,
+      });
+    }
   });
 }
 
