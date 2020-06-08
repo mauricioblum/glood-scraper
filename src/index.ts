@@ -10,7 +10,12 @@ interface PageResult {
 
 const scrapePage = async () => {
   const results: PageResult[] = [];
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: [
+      'no-sandbox',
+    ],
+  });
   const page = await browser.newPage();
   const pageOneKg = await browser.newPage();
   await page.goto('https://www.glood.pt/produto/3279/barao-erva-mate-chimarrao-500g');
