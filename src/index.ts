@@ -1,11 +1,30 @@
 import puppeteer from 'puppeteer';
 
+interface PageResult {
+  productName: string | undefined;
+  price: string | undefined;
+  oeirasStock: string | undefined;
+}
+
 const scrapePage = async () => {
+  const results: PageResult[] = [];
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
+  const pageOneKg = await browser.newPage();
   await page.goto('https://www.glood.pt/produto/3279/barao-erva-mate-chimarrao-500g');
-
+  await pageOneKg.goto('https://www.glood.pt/produto/3926/barao-erva-mate-chimarrao-1kg');
   
+  const result = await evaluatePage(page, 'Barao-500g');
+  results.push(result);
+
+  const resultOneKg = await evaluatePage(pageOneKg, 'Barao-1kg');
+  results.push(resultOneKg);
+
+  browser.close();
+  return results;
+}
+
+async function evaluatePage(page: puppeteer.Page, pageName: string): Promise<PageResult> {
   const result = await page.evaluate(() => {
     const productStockList: Element[] = [];
     const stocks = document.getElementById('stocks');
@@ -21,15 +40,29 @@ const scrapePage = async () => {
       oeirasStock,
     };
   })
-  
-  browser.close();
-  return result;
+
+  return {
+    productName: pageName,
+    ...result,
+  };
 }
 
 function runScrape() {
-  scrapePage().then(({price, oeirasStock}) => {
-    console.log('The product price is: ', price);
-    console.log('Stock in Oeiras:', oeirasStock);
+  scrapePage().then((results) => {
+    results.forEach(result => {
+      if (result.price && result.oeirasStock){
+        console.log('-----------');
+        console.log('Results for: ', result.productName);
+        console.log('The product price is: ', result.price);
+        console.log('Stock in Oeiras:', result.oeirasStock);
+        console.log('-----------\n');
+      } else {
+        console.log('-----------');
+        console.log('Results for: ', result.productName);
+        console.log('Not available in the website at the moment!');
+        console.log('-----------\n');
+      }
+    });
     setTimeout(() => {
       main();
     }, 5000)
