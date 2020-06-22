@@ -112,17 +112,4 @@ function main() {
   }
 }
 
-var date = new Date();
-
 main();
-const hour = date.getUTCHours();
-setInterval(() => {
-  if (hour <= 21){
-    main();
-    date = new Date();
-    console.log('\nDate allowed to run! -> ', date.getUTCHours());
-  } else {
-    console.log('Out of the allowed execution time! -> ', date.getUTCHours());
-    date = new Date();
-  }
-}, Number(process.env.INTERVAL_TIME) || 10800000);
