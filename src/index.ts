@@ -8,6 +8,14 @@ interface PageResult {
   oeirasStock: string | undefined;
 }
 
+interface DataResponse {
+  availability: {
+    productName: string,
+    price: string,
+    stock: string,
+  } | null;
+}
+
 const scrapePage = async () => {
   const results: PageResult[] = [];
   const browser = await puppeteer.launch({
@@ -46,7 +54,31 @@ async function evaluatePage(page: puppeteer.Page, pageName: string): Promise<Pag
       price: productPrice?.innerHTML,
       oeirasStock,
     };
-  })
+  });
+
+  return {
+    productName: pageName,
+    ...result,
+  };
+}
+
+async function testEvaluation(page: puppeteer.Page, pageName: string): Promise<PageResult> {
+  const result = await page.evaluate(() => {
+    const testString = document.querySelector('div#productSearchResults > h2');
+
+    if (testString) {
+      return {
+        price: '5,00',
+        oeirasStock: 'Disponível',
+      }
+    }
+
+    return {
+      price: undefined,
+      oeirasStock: undefined,
+    }
+
+  });
 
   return {
     productName: pageName,
@@ -61,10 +93,13 @@ const isAvailableStock = (stock: string) => {
   return true;
 }
 
-function runScrape() {
+export async function runScrape(): Promise<DataResponse> {
   let mailBody = '';
   let hasStock = false;
-  scrapePage().then(async (results) => {
+  let data: DataResponse = {
+    availability: null,
+  };
+  const scrape = scrapePage().then(async (results) => {
     results.forEach(result => {
       if (result.price && result.oeirasStock && isAvailableStock(result.oeirasStock)){
         console.log('-----------');
@@ -79,6 +114,13 @@ function runScrape() {
         <h4>Estoque: <span style="font-size:30px">${result.oeirasStock}</span></h4>
         <br/>
         `;
+        data = {
+          availability: {
+            productName: result.productName || '',
+            price: result.price,
+            stock: result.oeirasStock,
+          }
+        };
       } else {
         console.log('-----------');
         console.log('Results for: ', result.productName);
@@ -89,6 +131,9 @@ function runScrape() {
         <h4>PRODUTO SEM ESTOQUE OU INDISPONÍVEL</h4>
         <br/>
         `;
+        data = {
+          availability: null,
+        };
       }
     });
     if(hasStock){
@@ -101,15 +146,6 @@ function runScrape() {
       });
     }
   });
+  await scrape;
+  return data;
 }
-
-function main() {
-  console.log('Fetching data, please wait...');
-  try {
-    runScrape();
-  } catch(err){
-    console.log(err);
-  }
-}
-
-main();
