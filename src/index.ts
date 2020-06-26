@@ -8,12 +8,14 @@ interface PageResult {
   oeirasStock: string | undefined;
 }
 
-interface DataResponse {
-  availability: {
+interface Availability {
     productName: string,
     price: string,
     stock: string,
-  } | null;
+}
+
+interface DataResponse {
+  availability: Availability[] | null;
 }
 
 const scrapePage = async () => {
@@ -99,6 +101,7 @@ export async function runScrape(): Promise<DataResponse> {
   let data: DataResponse = {
     availability: null,
   };
+  let productAvailability: Availability[] = [];
   const scrape = scrapePage().then(async (results) => {
     results.forEach(result => {
       if (result.price && result.oeirasStock && isAvailableStock(result.oeirasStock)){
@@ -114,13 +117,12 @@ export async function runScrape(): Promise<DataResponse> {
         <h4>Estoque: <span style="font-size:30px">${result.oeirasStock}</span></h4>
         <br/>
         `;
-        data = {
-          availability: {
-            productName: result.productName || '',
-            price: result.price,
-            stock: result.oeirasStock,
-          }
+        const resultProductAvailability = {
+          productName: result.productName || '',
+          price: result.price,
+          stock: result.oeirasStock
         };
+        productAvailability.push(resultProductAvailability);
       } else {
         console.log('-----------');
         console.log('Results for: ', result.productName);
@@ -131,21 +133,26 @@ export async function runScrape(): Promise<DataResponse> {
         <h4>PRODUTO SEM ESTOQUE OU INDISPONÍVEL</h4>
         <br/>
         `;
-        data = {
-          availability: null,
-        };
+        productAvailability.push({
+          productName: result.productName || '',
+          price: 'Unavailable',
+          stock: 'Unavailable'
+        });
       }
     });
     if(hasStock){
       await sendMail({
-        from:'no-reply@gloodscraper.com',
-        replyTo:'no-reply@gloodscraper.com',
+        from:'mauriciocblum@gmail.com',
+        replyTo:'mauriciocblum@gmail.com',
         subject: 'Atualização de disponibilidade da Erva Mate no Glood.pt', 
         text:' Hello GloodScraper 2',
         html: '<p>Confira o resultado mais recente da disponiblidade dos produtos:<p><br/>' + mailBody,
       });
     }
   });
+  data = {
+    availability: productAvailability,
+  };
   await scrape;
   return data;
 }

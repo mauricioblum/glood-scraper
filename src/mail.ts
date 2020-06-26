@@ -1,16 +1,17 @@
 import nodemailer from 'nodemailer';
 
 let transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: 'smtp.sendgrid.net',
   port: 465,
   secure: true,
   auth: {
-    type: 'OAuth2',
+    // type: 'OAuth2',
     user: process.env.SMTP_USER, 
-    clientId: process.env.SMTP_CLIENT_ID,
-    clientSecret: process.env.SMTP_CLIENT_SECRET,
-    refreshToken: process.env.SMTP_REFRESH_TOKEN,
-    accessToken: process.env.SMTP_ACCESS_TOKEN,
+    pass: process.env.SMTP_PASSWORD,
+    // clientId: process.env.SMTP_CLIENT_ID,
+    // clientSecret: process.env.SMTP_CLIENT_SECRET,
+    // refreshToken: process.env.SMTP_REFRESH_TOKEN,
+    // accessToken: process.env.SMTP_ACCESS_TOKEN,
   },
 });
 
